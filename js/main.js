@@ -1,7 +1,8 @@
 /**
  * ============================================================
  * KINÉ, PREV'ACTION - MAIN JAVASCRIPT
- * Vanilla JS for language switching and UI interactions
+ * Smooth interactions, language switching, and animations
+ * Vanilla JS - No frameworks or libraries
  * ============================================================
  */
 
@@ -9,14 +10,30 @@
     'use strict';
 
     // ==================== DOM ELEMENTS ====================
-    const header = document.getElementById('header');
-    const navMenu = document.getElementById('nav-menu');
-    const navToggle = document.getElementById('nav-toggle');
-    const navClose = document.getElementById('nav-close');
-    const navLinks = document.querySelectorAll('.nav__link');
-    const langBtns = document.querySelectorAll('.lang-btn');
-    const currentYearEl = document.getElementById('current-year');
-    const backToTopBtn = document.getElementById('back-to-top');
+    const elements = {
+        // Header & Navigation
+        header: document.getElementById('header'),
+        menuToggle: document.getElementById('menu-toggle'),
+        mobileMenu: document.getElementById('mobile-menu'),
+        mobileLinks: document.querySelectorAll('.mobile-menu__link'),
+        navLinks: document.querySelectorAll('.nav__link'),
+        
+        // Language
+        langBtns: document.querySelectorAll('.lang-switch__btn'),
+        
+        // Accordions & Ateliers
+        accordionItems: document.querySelectorAll('.accordion__item'),
+        atelierCards: document.querySelectorAll('.atelier-card'),
+        
+        // Back to top
+        backToTop: document.getElementById('back-to-top'),
+        
+        // Footer
+        currentYear: document.getElementById('current-year'),
+        
+        // All translatable elements
+        translatables: document.querySelectorAll('[data-fr][data-en]')
+    };
 
     // Current language state
     let currentLang = 'fr';
@@ -24,61 +41,54 @@
     // ==================== INITIALIZATION ====================
     function init() {
         setCurrentYear();
-        initScrollHeader();
+        initHeader();
         initMobileMenu();
         initLanguageSwitcher();
         initSmoothScroll();
-        initIntersectionObserver();
-        initTouchSupport();
+        initAccordions();
+        initAtelierCards();
         initBackToTop();
+        initRevealAnimations();
+        initTouchOptimization();
+        initLightbox();
     }
 
     // ==================== SET CURRENT YEAR ====================
-    /**
-     * Sets the current year in the footer copyright
-     */
     function setCurrentYear() {
-        if (currentYearEl) {
-            currentYearEl.textContent = new Date().getFullYear();
+        if (elements.currentYear) {
+            elements.currentYear.textContent = new Date().getFullYear();
         }
     }
 
-    // ==================== SCROLL HEADER ====================
+    // ==================== HEADER ====================
     /**
-     * Adds shadow to header on scroll and shows/hides back to top button
+     * Handles header scroll effects
      */
-    function initScrollHeader() {
-        function handleScroll() {
+    function initHeader() {
+        let lastScrollY = 0;
+        let ticking = false;
+
+        function updateHeader() {
             const scrollY = window.scrollY;
             
-            // Header shadow
+            // Add scrolled class for shadow
             if (scrollY > 50) {
-                header.classList.add('scrolled');
+                elements.header.classList.add('header--scrolled');
             } else {
-                header.classList.remove('scrolled');
+                elements.header.classList.remove('header--scrolled');
             }
             
-            // Back to top button visibility
-            if (backToTopBtn) {
-                if (scrollY > 400) {
-                    backToTopBtn.classList.add('visible');
-                } else {
-                    backToTopBtn.classList.remove('visible');
-                }
-            }
+            lastScrollY = scrollY;
+            ticking = false;
         }
 
         // Initial check
-        handleScroll();
+        updateHeader();
 
-        // Throttled scroll listener using requestAnimationFrame
-        let ticking = false;
+        // Throttled scroll listener
         window.addEventListener('scroll', function() {
             if (!ticking) {
-                window.requestAnimationFrame(function() {
-                    handleScroll();
-                    ticking = false;
-                });
+                requestAnimationFrame(updateHeader);
                 ticking = true;
             }
         }, { passive: true });
@@ -86,68 +96,69 @@
 
     // ==================== MOBILE MENU ====================
     /**
-     * Handles mobile navigation menu toggle
+     * Handles mobile menu toggle and interactions
      */
     function initMobileMenu() {
-        // Open menu
-        if (navToggle) {
-            navToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                openMenu();
-            });
-        }
+        if (!elements.menuToggle || !elements.mobileMenu) return;
 
-        // Close menu
-        if (navClose) {
-            navClose.addEventListener('click', function(e) {
-                e.stopPropagation();
-                closeMenu();
-            });
-        }
+        // Toggle menu
+        elements.menuToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleMenu();
+        });
 
-        // Close menu on nav link click
-        navLinks.forEach(function(link) {
+        // Close menu on link click
+        elements.mobileLinks.forEach(function(link) {
             link.addEventListener('click', closeMenu);
         });
 
         // Close menu on escape key
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && navMenu.classList.contains('active')) {
+            if (e.key === 'Escape' && elements.mobileMenu.classList.contains('active')) {
                 closeMenu();
             }
         });
 
         // Close menu on click outside
         document.addEventListener('click', function(e) {
-            if (navMenu.classList.contains('active') && 
-                !navMenu.contains(e.target) && 
-                !navToggle.contains(e.target)) {
+            if (elements.mobileMenu.classList.contains('active') && 
+                !elements.mobileMenu.contains(e.target) && 
+                !elements.menuToggle.contains(e.target)) {
                 closeMenu();
             }
         });
+    }
 
-        // Prevent scrolling when menu is open
-        function openMenu() {
-            navMenu.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            document.body.style.touchAction = 'none';
-            navClose.focus();
+    function toggleMenu() {
+        const isOpen = elements.mobileMenu.classList.contains('active');
+        
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu();
         }
+    }
 
-        function closeMenu() {
-            navMenu.classList.remove('active');
-            document.body.style.overflow = '';
-            document.body.style.touchAction = '';
-        }
+    function openMenu() {
+        elements.mobileMenu.classList.add('active');
+        elements.menuToggle.classList.add('active');
+        elements.menuToggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+        elements.mobileMenu.classList.remove('active');
+        elements.menuToggle.classList.remove('active');
+        elements.menuToggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
     }
 
     // ==================== LANGUAGE SWITCHER ====================
     /**
      * Handles language switching between FR and EN
-     * Content is stored in data-fr and data-en attributes
      */
     function initLanguageSwitcher() {
-        langBtns.forEach(function(btn) {
+        elements.langBtns.forEach(function(btn) {
             btn.addEventListener('click', function() {
                 const lang = this.dataset.lang;
                 
@@ -156,12 +167,12 @@
                 currentLang = lang;
                 
                 // Update active button state
-                langBtns.forEach(function(b) {
+                elements.langBtns.forEach(function(b) {
                     b.classList.remove('active');
                 });
                 this.classList.add('active');
 
-                // Update HTML lang attribute
+                // Update HTML lang attribute (triggers CSS language rules)
                 document.documentElement.lang = lang;
 
                 // Switch all translatable content
@@ -175,23 +186,15 @@
      * @param {string} lang - Language code ('fr' or 'en')
      */
     function switchLanguage(lang) {
-        // Select all elements with data-fr and data-en attributes
-        const translatableElements = document.querySelectorAll('[data-fr][data-en]');
-        
-        translatableElements.forEach(function(el) {
+        elements.translatables.forEach(function(el) {
             const translation = el.dataset[lang];
             
+            // Only update if translation exists and is not empty
             if (translation) {
-                // Check if it's an input element (button, etc.)
-                if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
-                    el.textContent = translation;
-                } 
                 // Check if element contains HTML (like <br> tags)
-                else if (translation.includes('<br>') || translation.includes('<')) {
+                if (translation.includes('<br>') || translation.includes('<')) {
                     el.innerHTML = translation;
-                } 
-                // Regular text content
-                else {
+                } else {
                     el.textContent = translation;
                 }
             }
@@ -200,11 +203,13 @@
 
     // ==================== SMOOTH SCROLL ====================
     /**
-     * Handles smooth scrolling to anchor links with header offset
+     * Handles smooth scrolling to anchor links
      */
     function initSmoothScroll() {
-        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
-            anchor.addEventListener('click', function(e) {
+        const allLinks = document.querySelectorAll('a[href^="#"]');
+        
+        allLinks.forEach(function(link) {
+            link.addEventListener('click', function(e) {
                 const targetId = this.getAttribute('href');
                 
                 if (targetId === '#') return;
@@ -214,7 +219,11 @@
                 if (targetElement) {
                     e.preventDefault();
                     
-                    const headerHeight = header.offsetHeight;
+                    // Close mobile menu if open
+                    closeMenu();
+                    
+                    // Calculate offset
+                    const headerHeight = elements.header.offsetHeight;
                     const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - headerHeight;
                     
                     window.scrollTo({
@@ -226,107 +235,231 @@
         });
     }
 
-    // ==================== INTERSECTION OBSERVER ====================
+    // ==================== ACCORDIONS (Why Invest Section) ====================
     /**
-     * Adds animation classes when sections come into view
+     * Handles accordion open/close with smooth animations
      */
-    function initIntersectionObserver() {
-        // Check if IntersectionObserver is supported
-        if (!('IntersectionObserver' in window)) return;
-
-        const sections = document.querySelectorAll('section');
-        
-        const observerOptions = {
-            root: null,
-            rootMargin: '0px',
-            threshold: 0.1
-        };
-
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
+    function initAccordions() {
+        elements.accordionItems.forEach(function(item) {
+            const header = item.querySelector('.accordion__header');
+            const content = item.querySelector('.accordion__content');
+            
+            if (!header || !content) return;
+            
+            header.addEventListener('click', function() {
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                
+                // Close all other accordions (optional - comment out for multiple open)
+                elements.accordionItems.forEach(function(otherItem) {
+                    if (otherItem !== item) {
+                        const otherHeader = otherItem.querySelector('.accordion__header');
+                        const otherContent = otherItem.querySelector('.accordion__content');
+                        if (otherHeader && otherContent) {
+                            otherHeader.setAttribute('aria-expanded', 'false');
+                            otherContent.classList.remove('active');
+                        }
+                    }
+                });
+                
+                // Toggle current accordion
+                this.setAttribute('aria-expanded', !isExpanded);
+                content.classList.toggle('active');
             });
-        }, observerOptions);
-
-        sections.forEach(function(section) {
-            observer.observe(section);
         });
     }
 
-    // ==================== TOUCH SUPPORT ====================
+    // ==================== ATELIER CARDS ====================
     /**
-     * Improves touch interactions on mobile devices
+     * Handles atelier card expansion
      */
-    function initTouchSupport() {
-        // Add touch-friendly class to body
-        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            document.body.classList.add('touch-device');
-        }
-
-        // Prevent double-tap zoom on buttons
-        const buttons = document.querySelectorAll('.btn, .lang-btn, .nav__toggle, .nav__close, .back-to-top');
-        buttons.forEach(function(btn) {
-            btn.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                this.click();
+    function initAtelierCards() {
+        elements.atelierCards.forEach(function(card) {
+            const toggle = card.querySelector('.atelier-card__toggle');
+            const content = card.querySelector('.atelier-card__content');
+            
+            if (!toggle || !content) return;
+            
+            // Make entire header clickable
+            const header = card.querySelector('.atelier-card__header');
+            
+            header.addEventListener('click', function() {
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                
+                // Toggle current card
+                toggle.setAttribute('aria-expanded', !isExpanded);
+                content.classList.toggle('active');
             });
         });
     }
 
     // ==================== BACK TO TOP ====================
     /**
-     * Handles smooth scroll back to top
+     * Handles back to top button visibility and click
      */
     function initBackToTop() {
-        if (backToTopBtn) {
-            backToTopBtn.addEventListener('click', function() {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-        }
-    }
+        if (!elements.backToTop) return;
 
-    // ==================== UTILITY FUNCTIONS ====================
-    
-    /**
-     * Debounce function for performance optimization
-     * @param {Function} func - Function to debounce
-     * @param {number} wait - Wait time in ms
-     * @returns {Function} - Debounced function
-     */
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = function() {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+        let ticking = false;
 
-    /**
-     * Throttle function for performance optimization
-     * @param {Function} func - Function to throttle
-     * @param {number} limit - Time limit in ms
-     * @returns {Function} - Throttled function
-     */
-    function throttle(func, limit) {
-        let inThrottle;
-        return function(...args) {
-            if (!inThrottle) {
-                func.apply(this, args);
-                inThrottle = true;
-                setTimeout(function() {
-                    inThrottle = false;
-                }, limit);
+        function updateButton() {
+            if (window.scrollY > 500) {
+                elements.backToTop.classList.add('visible');
+            } else {
+                elements.backToTop.classList.remove('visible');
             }
+            ticking = false;
+        }
+
+        // Initial check
+        updateButton();
+
+        // Scroll listener
+        window.addEventListener('scroll', function() {
+            if (!ticking) {
+                requestAnimationFrame(updateButton);
+                ticking = true;
+            }
+        }, { passive: true });
+
+        // Click handler
+        elements.backToTop.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+
+    // ==================== REVEAL ANIMATIONS ====================
+    /**
+     * Adds reveal animations when elements enter viewport
+     */
+    function initRevealAnimations() {
+        // Check if IntersectionObserver is supported
+        if (!('IntersectionObserver' in window)) return;
+
+        // Elements to animate
+        const revealElements = document.querySelectorAll(
+            '.section-label, .section-title, .about__image-wrapper, .about__text, .about__stats, ' +
+            '.kine__card, .atelier-card, .gallery__item, .accordion__item, .contact__item, ' +
+            '.contact__card, .hero__badge, .hero__title, .hero__description, .hero__cta, .hero__visual'
+        );
+
+        // Add reveal class
+        revealElements.forEach(function(el) {
+            el.classList.add('reveal');
+        });
+
+        // Observer options
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px 0px -50px 0px',
+            threshold: 0.1
         };
+
+        // Create observer
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    // Add staggered delay for grid items
+                    const parent = entry.target.parentElement;
+                    if (parent) {
+                        const siblings = Array.from(parent.children).filter(function(child) {
+                            return child.classList.contains('reveal');
+                        });
+                        const index = siblings.indexOf(entry.target);
+                        if (index > 0) {
+                            entry.target.style.transitionDelay = (index * 80) + 'ms';
+                        }
+                    }
+                    
+                    entry.target.classList.add('visible');
+                    
+                    // Unobserve after animation
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all elements
+        revealElements.forEach(function(el) {
+            observer.observe(el);
+        });
+    }
+
+    // ==================== TOUCH OPTIMIZATION ====================
+    /**
+     * Optimizes touch interactions for mobile
+     */
+    function initTouchOptimization() {
+        // Add touch class to body
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            document.body.classList.add('touch-device');
+        }
+
+        // Prevent double-tap zoom on buttons
+        const interactiveElements = document.querySelectorAll(
+            '.btn, .lang-switch__btn, .menu-toggle, .back-to-top, .accordion__header, .atelier-card__header'
+        );
+        
+        interactiveElements.forEach(function(el) {
+            el.addEventListener('touchend', function(e) {
+                // Only prevent default if this is a tap (not a scroll)
+                if (e.cancelable) {
+                    e.preventDefault();
+                    this.click();
+                }
+            }, { passive: false });
+        });
+    }
+
+    // ==================== LIGHTBOX ====================
+    /**
+     * Handles image lightbox for gallery
+     */
+    function initLightbox() {
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightbox-image');
+        const lightboxClose = document.getElementById('lightbox-close');
+        const galleryImages = document.querySelectorAll('[data-lightbox]');
+
+        if (!lightbox || !lightboxImage || !lightboxClose) return;
+
+        // Open lightbox on image click
+        galleryImages.forEach(function(img) {
+            img.addEventListener('click', function() {
+                lightboxImage.src = this.src;
+                lightboxImage.alt = this.alt;
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        // Close lightbox on close button click
+        lightboxClose.addEventListener('click', closeLightbox);
+
+        // Close lightbox on background click
+        lightbox.addEventListener('click', function(e) {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        // Close lightbox on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                closeLightbox();
+            }
+        });
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+            // Clear image after transition
+            setTimeout(function() {
+                lightboxImage.src = '';
+            }, 400);
+        }
     }
 
     // ==================== VIEWPORT HEIGHT FIX ====================
@@ -335,19 +468,46 @@
      */
     function setViewportHeight() {
         const vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        document.documentElement.style.setProperty('--vh', vh + 'px');
+    }
+
+    // Debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(function() {
+                func.apply(context, args);
+            }, wait);
+        };
     }
 
     // Set on load and resize
     setViewportHeight();
     window.addEventListener('resize', debounce(setViewportHeight, 100));
 
+    // ==================== PAGE LOAD ANIMATION ====================
+    /**
+     * Triggers hero animations after page load
+     */
+    function initPageLoadAnimation() {
+        // Add loaded class to body after a small delay
+        setTimeout(function() {
+            document.body.classList.add('loaded');
+        }, 100);
+    }
+
     // ==================== RUN INITIALIZATION ====================
-    // Wait for DOM to be fully loaded
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+            initPageLoadAnimation();
+        });
     } else {
         init();
+        initPageLoadAnimation();
     }
 
 })();
