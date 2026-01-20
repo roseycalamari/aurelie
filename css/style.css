@@ -749,6 +749,14 @@ html[lang="en"] .lang-en {
     margin-bottom: 0;
 }
 
+.kine__description-source {
+    font-size: var(--text-sm);
+    color: var(--color-text-light-muted);
+    font-style: italic;
+    margin: var(--space-md) 0 0 0;
+    opacity: 0.8;
+}
+
 .kine__grid {
     display: flex;
     flex-direction: column;
