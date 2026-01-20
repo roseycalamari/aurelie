@@ -285,6 +285,18 @@
             header.addEventListener('click', function() {
                 const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
                 
+                // Close all other cards first
+                elements.atelierCards.forEach(function(otherCard) {
+                    if (otherCard !== card) {
+                        const otherToggle = otherCard.querySelector('.atelier-card__toggle');
+                        const otherContent = otherCard.querySelector('.atelier-card__content');
+                        if (otherToggle && otherContent) {
+                            otherToggle.setAttribute('aria-expanded', 'false');
+                            otherContent.classList.remove('active');
+                        }
+                    }
+                });
+                
                 // Toggle current card
                 toggle.setAttribute('aria-expanded', !isExpanded);
                 content.classList.toggle('active');
